@@ -48,7 +48,6 @@ button, input, select { font: inherit; color: inherit; }
 .cms-search-filter-group__list { margin: 0; padding: 0; list-style: none; }
 .cms-search-filter-group__item[hidden] { display: none; }
 .cms-search-filter__tags[hidden] { display: none; }
-.cms-search-filter__tags > * { font: inherit; }
 
 @media (min-width: 1024px) {
   .cms-search-filter__wrapper { padding-right: 12rem; }
