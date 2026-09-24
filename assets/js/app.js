@@ -41,7 +41,7 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var el = {
-    form: $('controls'), search: $('search'), country: $('f-country'), type: $('f-type'), org: $('f-org'),
+    form: $('controls'), search: $('search'), groups: $('filter-groups'), tags: $('filter-tags'), resetAll: $('reset-all'),
     count: $('count'), tabMap: $('tab-map'), tabList: $('tab-list'), paneMap: $('pane-map'), paneList: $('pane-list'),
     index: $('index'), resources: $('resources'), globalNote: $('global-note'), map: $('map')
   };
@@ -157,7 +157,7 @@
       .catch(function (err) {
         console.error('[El Niño explorer]', err);
         el.count.textContent = 'Published work could not be loaded.';
-        el.resources.innerHTML = '<div class="notice"><p>We couldn’t reach the data source. Check your connection and try again.</p><button type="button" class="button" id="retry">Try again</button></div>';
+        el.resources.innerHTML = '<div class="notice h-typo-copy-m"><p>We couldn’t reach the data source. Check your connection and try again.</p>' + button('Try again', 'id="retry"') + '</div>';
         $('retry').addEventListener('click', load);
         postHeight();
       });
@@ -165,44 +165,149 @@
 
   /* ---------- Filters ---------- */
 
-  function fillSelect(select, values) {
-    select.length = 1;
-    values.forEach(function (v) { select.add(new Option(v, v)); });
-  }
+  // Multi-select filter groups in the cgiar.org/publications style
+  // (cms-search-filter). Ticking boxes only changes the draft; "Apply filters"
+  // commits it to `selected`, which drives the results.
+  var GROUPS = [
+    { key: 'country', label: 'Country or region' },
+    { key: 'type', label: 'Type of work' },
+    { key: 'org', label: 'Organization' }
+  ];
+  var options = { country: [], type: [], org: [] };
+  var selected = { country: [], type: [], org: [] };
 
   function uniq(list) { return list.filter(function (v, i) { return v && list.indexOf(v) === i; }); }
 
   function buildOptions() {
     var countries = uniq(entries.map(function (e) { return e.country; })).filter(function (c) { return c !== GLOBAL; }).sort();
     if (entries.some(function (e) { return e.country === GLOBAL; })) countries.push(GLOBAL);
-    fillSelect(el.country, countries);
+    options.country = countries;
 
     var types = uniq(entries.map(function (e) { return e.type; }));
-    fillSelect(el.type, TYPES.filter(function (t) { return types.indexOf(t) > -1; })
-      .concat(types.filter(function (t) { return TYPES.indexOf(t) < 0; })));
+    options.type = TYPES.filter(function (t) { return types.indexOf(t) > -1; })
+      .concat(types.filter(function (t) { return TYPES.indexOf(t) < 0; }));
 
     var orgs = uniq([].concat.apply([], entries.map(function (e) { return e.orgs; })));
-    fillSelect(el.org, ORGS.map(function (o) { return o.label; }).filter(function (l) { return orgs.indexOf(l) > -1; }));
+    options.org = ORGS.map(function (o) { return o.label; }).filter(function (l) { return orgs.indexOf(l) > -1; });
+
+    el.groups.innerHTML = GROUPS.map(groupHtml).join('');
+  }
+
+  function groupHtml(g) {
+    var id = 'filter-' + g.key;
+    return '<div class="cms-search-filter-group" data-group="' + g.key + '">' +
+      '<button type="button" class="cms-search-filter-link h-typo-link" aria-expanded="false" aria-controls="' + id + '">' +
+        '<span class="cms-search-filter-link__wrapper"><span class="cms-search-filter-link__text">' + esc(g.label) + '</span>' +
+        '<span class="cms-search-filter-link__counter"></span></span>' +
+        '<span class="cms-search-filter-link__icon">' + icon('arrow-down') + '</span>' +
+      '</button>' +
+      '<div class="filter-dropdown" id="' + id + '" hidden>' +
+        '<div class="cms-search-filter-group__dropdown">' +
+          '<div class="cms-search-filter-group__action">' +
+            '<button class="cms-search-filter-group__select-all h-typo-copy-xs" type="button" data-select-all>Select all</button>' +
+            '<button class="cms-search-filter-group__reset h-typo-copy-xs" type="button" data-clear>Reset</button>' +
+          '</div>' +
+          '<div class="cms-search-filter-group__content">' +
+            (options[g.key].length > 6 ? '<div class="cms-search-filter-group__search"><input class="cms-search-filter-group__search-input h-typo-copy-s" type="text" placeholder="Search" aria-label="Search ' + esc(g.label.toLowerCase()) + ' options"></div>' : '') +
+            '<ul class="cms-search-filter-group__list">' + options[g.key].map(function (v) {
+              return '<li class="cms-search-filter-group__item" data-filtertext="' + esc(v.toLowerCase()) + '"><label class="cms-search-filter-group__label">' +
+                '<input class="cms-search-filter-group__checkbox" type="checkbox" value="' + esc(v) + '">' +
+                '<span class="cms-search-filter-group__text h-typo-link-s">' + esc(v === GLOBAL ? 'Global resources' : v) + '</span></label></li>';
+            }).join('') + '</ul>' +
+            '<p class="cms-search-filter-group__no-results h-typo-copy-xs" hidden>No matches found</p>' +
+            '<div class="cms-search-filter-group__btn"><button class="cms-search-filter-group__btn-submit h-typo-link-s" type="button" data-apply>Apply filters</button></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function groupEl(key) { return el.groups.querySelector('[data-group="' + key + '"]'); }
+
+  function openGroup(key) {
+    closeGroups();
+    var g = groupEl(key);
+    g.querySelectorAll('.cms-search-filter-group__checkbox').forEach(function (cb) { cb.checked = selected[key].indexOf(cb.value) > -1; });
+    var search = g.querySelector('.cms-search-filter-group__search-input');
+    if (search) { search.value = ''; filterOptions(g, ''); }
+    g.querySelector('.cms-search-filter-link').setAttribute('aria-expanded', 'true');
+    g.querySelector('.filter-dropdown').hidden = false;
+    postHeight();
+  }
+
+  function closeGroups() {
+    el.groups.querySelectorAll('.cms-search-filter-group').forEach(function (g) {
+      g.querySelector('.cms-search-filter-link').setAttribute('aria-expanded', 'false');
+      g.querySelector('.filter-dropdown').hidden = true;
+    });
+  }
+
+  function filterOptions(g, q) {
+    q = norm(q);
+    var shown = 0;
+    g.querySelectorAll('.cms-search-filter-group__item').forEach(function (li) {
+      li.hidden = q && li.getAttribute('data-filtertext').indexOf(q) < 0;
+      if (!li.hidden) shown++;
+    });
+    g.querySelector('.cms-search-filter-group__no-results').hidden = shown > 0;
+  }
+
+  function applyGroup(key) {
+    var g = groupEl(key);
+    selected[key] = Array.prototype.filter.call(g.querySelectorAll('.cms-search-filter-group__checkbox'), function (cb) { return cb.checked; })
+      .map(function (cb) { return cb.value; });
+    closeGroups();
+    render();
+    fitToPins();
+  }
+
+  function setFilter(key, values) {
+    selected[key] = values.slice();
+    render();
+    fitToPins();
+  }
+
+  function resetAll() {
+    el.search.value = '';
+    GROUPS.forEach(function (g) { selected[g.key] = []; });
+    closeGroups();
+    render();
+    fitToPins();
+  }
+
+  function drawFilterState() {
+    GROUPS.forEach(function (g) {
+      var n = selected[g.key].length;
+      var counter = groupEl(g.key).querySelector('.cms-search-filter-link__counter');
+      counter.textContent = n || '';
+      counter.style.display = n ? 'inline-block' : '';
+    });
+    el.tags.innerHTML = [].concat.apply([], GROUPS.map(function (g) {
+      return selected[g.key].map(function (v) {
+        return '<button type="button" class="h-typo-tag" data-untag="' + g.key + '" data-value="' + esc(v) + '" aria-label="Remove filter: ' + esc(v) + '">' +
+          esc(v === GLOBAL ? 'Global resources' : v) + '<svg aria-hidden="true"><use href="assets/icons.svg#close"></use></svg></button>';
+      });
+    })).join('');
+    el.tags.hidden = !el.tags.innerHTML;
   }
 
   function matching() {
-    var q = norm(el.search.value), c = el.country.value, t = el.type.value, o = el.org.value;
+    var q = norm(el.search.value), c = selected.country, t = selected.type, o = selected.org;
     return entries.filter(function (e) {
-      return (!c || e.country === c) &&
-        (!t || e.type === t) &&
-        (!o || e.orgs.indexOf(o) > -1) &&
+      return (!c.length || c.indexOf(e.country) > -1) &&
+        (!t.length || t.indexOf(e.type) > -1) &&
+        (!o.length || e.orgs.some(function (x) { return o.indexOf(x) > -1; })) &&
         (!q || norm([e.title, e.org, e.type, e.text, e.placeLabel].join(' ')).indexOf(q) > -1);
     });
   }
 
   // Filters live in the query string so CGIAR.org can embed a pre-filtered
-  // view, e.g. index.html?country=Malawi&view=list
+  // view, e.g. index.html?country=Malawi&country=India&view=list
   function readState() {
     var p = new URLSearchParams(location.search);
     el.search.value = p.get('q') || '';
-    [['country', el.country], ['type', el.type], ['org', el.org]].forEach(function (pair) {
-      var v = p.get(pair[0]);
-      if (v && Array.prototype.some.call(pair[1].options, function (opt) { return opt.value === v; })) pair[1].value = v;
+    GROUPS.forEach(function (g) {
+      selected[g.key] = p.getAll(g.key).filter(function (v) { return options[g.key].indexOf(v) > -1; });
     });
     setView(p.get('view') === 'list' ? 'list' : 'map', false);
   }
@@ -210,9 +315,7 @@
   function writeState() {
     var p = new URLSearchParams();
     if (el.search.value.trim()) p.set('q', el.search.value.trim());
-    if (el.country.value) p.set('country', el.country.value);
-    if (el.type.value) p.set('type', el.type.value);
-    if (el.org.value) p.set('org', el.org.value);
+    GROUPS.forEach(function (g) { selected[g.key].forEach(function (v) { p.append(g.key, v); }); });
     if (view === 'list') p.set('view', 'list');
     var qs = p.toString();
     try { history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '')); } catch (e) { /* sandboxed iframe */ }
@@ -227,6 +330,19 @@
   }
   var plural = function (n, one, many) { return n + ' ' + (n === 1 ? one : many); };
 
+  // Markup helpers for CGIAR design-system components (see cgiar-ui.css).
+  function icon(name) {
+    return '<svg class="a-icon" aria-hidden="true"><use href="assets/icons.svg#' + name + '"></use></svg>';
+  }
+  function detailLink(id) {
+    return '<button type="button" class="a-link a-link--right a-link--small h-typo-link-s link-button" data-goto="' + id + '">' +
+      '<span class="a-link__text">View details</span><span class="a-link__icon">' + icon('arrow-long-right') + '</span></button>';
+  }
+  function button(label, attrs) {
+    return '<button type="button" class="a-button a-button--primary a-button--size-small h-typo-link-s" ' + attrs + '>' +
+      '<span class="a-button__text">' + label + '</span></button>';
+  }
+
   function render() {
     var shown = matching();
     var pinned = shown.filter(function (e) { return e.pin; });
@@ -237,10 +353,13 @@
       ? '<strong>' + plural(shown.length, 'resource', 'resources') + '</strong> · ' + plural(places.length, 'place', 'places') + ' on the map'
       : '<strong>No resources</strong> match these filters';
 
+    drawFilterState();
+
     if (global.length && view === 'map') {
       el.globalNote.hidden = false;
-      el.globalNote.innerHTML = plural(global.length, 'global resource is', 'global resources are') +
-        ' not tied to one place. ' + (el.country.value === GLOBAL ? '' : '<button type="button" class="link" data-country="Global">Show global resources</button>');
+      el.globalNote.innerHTML = '<span>' + plural(global.length, 'global resource is', 'global resources are') + ' not tied to one place.</span>' +
+        (selected.country.length === 1 && selected.country[0] === GLOBAL ? '' : '<button type="button" class="a-link a-link--right a-link--small h-typo-link-s link-button" data-country="Global">' +
+          '<span class="a-link__text">Show global resources</span><span class="a-link__icon">' + icon('arrow-long-right') + '</span></button>');
     } else {
       el.globalNote.hidden = true;
     }
@@ -254,15 +373,16 @@
 
   function card(e) {
     return '<article class="resource" id="' + e.id + '" tabindex="-1">' +
-      '<p class="tags"><span class="tag tag-place">' + esc(e.placeLabel) + '</span>' +
-      (e.type ? '<span class="tag">' + esc(e.type) + '</span>' : '') + '</p>' +
-      '<h3>' + esc(e.title) + '</h3>' +
-      '<p class="meta">' + esc(e.org) + (e.date ? ' <span aria-hidden="true">·</span> <time>' + esc(e.date) + '</time>' : '') + '</p>' +
-      (e.text ? '<p class="text">' + esc(e.text) + '</p>' : '') +
-      '<p class="actions">' + e.links.map(function (l) {
-        return '<a href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer">' + esc(l.label) +
-          '<span class="visually-hidden"> (opens in a new tab)</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3h7v7M13 3 4 12"/></svg></a>';
-      }).join('') + '</p>' +
+      '<ul class="resource__tags" aria-label="Tags"><li class="a-tag"><span class="h-typo-tag">' + esc(e.placeLabel) + '</span></li>' +
+      (e.type ? '<li class="a-tag a-tag--type"><span class="h-typo-tag">' + esc(e.type) + '</span></li>' : '') + '</ul>' +
+      '<h3 class="resource__title h-typo-headline-xs">' + esc(e.title) + '</h3>' +
+      '<p class="resource__meta h-typo-copy-s">' + esc(e.org) + (e.date ? ' <span aria-hidden="true">·</span> <time>' + esc(e.date) + '</time>' : '') + '</p>' +
+      (e.text ? '<p class="resource__text h-typo-copy-m">' + esc(e.text) + '</p>' : '') +
+      '<div class="resource__actions">' + e.links.map(function (l) {
+        return '<a class="a-link a-link--right h-typo-link-s" href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer">' +
+          '<span class="a-link__text">' + esc(l.label) + '<span class="visually-hidden"> (opens in a new tab)</span></span>' +
+          '<span class="a-link__icon">' + icon('external-link') + '</span></a>';
+      }).join('') + '</div>' +
     '</article>';
   }
 
@@ -272,23 +392,25 @@
     });
     return groups.map(function (g) {
       var rows = shown.filter(function (e) { return e.country === g; });
-      return '<div class="group"><h3>' + esc(g === GLOBAL ? 'Global resources' : g) + ' <span>' + rows.length + '</span></h3><ul>' +
+      return '<div class="group"><h3 class="group__title h-typo-headline-xs">' + esc(g === GLOBAL ? 'Global resources' : g) +
+        ' <span class="group__count h-typo-copy-s">' + rows.length + '</span></h3><ul class="group__list">' +
         rows.map(function (e) {
-          return '<li><span class="row-title">' + esc(e.title) + '</span><span class="row-meta">' + esc(e.type) + '</span>' +
-            '<time class="row-date">' + esc(e.date) + '</time><button type="button" class="link" data-goto="' + e.id + '">View details</button></li>';
+          return '<li class="group__row"><span class="group__row-title h-typo-copy-m-2">' + esc(e.title) + '</span>' +
+            '<span class="group__row-meta h-typo-copy-s">' + esc(e.type) + '</span>' +
+            '<time class="group__row-meta h-typo-copy-s">' + esc(e.date) + '</time>' + detailLink(e.id) + '</li>';
         }).join('') + '</ul></div>';
     }).join('');
   }
 
   function emptyState() {
-    return '<div class="notice"><p>No published resources match these filters.</p><button type="button" class="button" data-reset>Reset filters</button></div>';
+    return '<div class="notice h-typo-copy-m"><p>No published resources match these filters.</p>' + button('Reset filters', 'data-reset') + '</div>';
   }
 
   /* ---------- Map ---------- */
 
   function initMap() {
     if (!window.L) {
-      el.map.innerHTML = '<p class="notice">The map could not load. Use the List view to explore the same resources.</p>';
+      el.map.innerHTML = '<p class="notice h-typo-copy-m">The map could not load. Use the List view to explore the same resources.</p>';
       return;
     }
     map = L.map(el.map, {
@@ -312,10 +434,17 @@
     map.on('mouseout', function () { map.scrollWheelZoom.disable(); });
   }
 
-  var shaded = {};
+  // Country colors come from the --color-map-* tokens on .map-frame (app.css).
+  var shaded = {}, mapColors;
+  function token(name) { return getComputedStyle(el.map).getPropertyValue(name).trim(); }
   function countryStyle(f) {
+    mapColors = mapColors || {
+      active: token('--color-map-shaded'),
+      inactive: token('--color-map-land'),
+      line: token('--color-map-coast')
+    };
     var on = shaded[f.properties.name];
-    return { color: '#fff', weight: 0.8, fillColor: on ? '#7fd9c1' : '#d9dfdd', fillOpacity: 1 };
+    return { color: mapColors.line, weight: 0.8, fillColor: on ? mapColors.active : mapColors.inactive, fillOpacity: 1 };
   }
 
   function drawMarkers(pinned) {
@@ -332,16 +461,19 @@
         title: name + ': ' + plural(n, 'resource', 'resources'),
         alt: name,
         riseOnHover: true,
-        icon: L.divIcon({ className: 'pin', html: '<span>' + n + '</span>', iconSize: [40, 40], iconAnchor: [20, 20], popupAnchor: [0, -18] })
+        icon: L.divIcon({ className: 'pin', html: '<span>' + n + '</span>', iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -18] })
       });
       marker.bindPopup(
-        '<p class="popup-place">' + esc(name) + '</p><p class="popup-count">' + plural(n, 'published resource', 'published resources') + '</p><ul class="popup-list">' +
+        '<div><p class="popup__place h-typo-headline-xs">' + esc(name) + '</p>' +
+        '<p class="popup__count h-typo-caption">' + plural(n, 'published resource', 'published resources') + '</p><ul class="popup__list">' +
         g.items.map(function (e) {
-          return '<li><span class="popup-type">' + esc(e.type) + '</span>' + esc(e.title) +
-            '<button type="button" class="link" data-goto="' + e.id + '">View details</button></li>';
-        }).join('') + '</ul>',
+          return '<li><span class="popup__type h-typo-tag">' + esc(e.type) + '</span><p class="popup__title h-typo-copy-s">' + esc(e.title) + '</p>' +
+            detailLink(e.id) + '</li>';
+        }).join('') + '</ul></div>',
         { maxWidth: 300, minWidth: 240, autoPanPadding: [24, 24] }
       );
+      marker.on('popupopen', function () { L.DomUtil.addClass(marker.getElement(), 'is-active'); });
+      marker.on('popupclose', function () { var m = marker.getElement(); if (m) L.DomUtil.removeClass(m, 'is-active'); });
       marker.home = L.latLng(g.pin.lat, g.pin.lng);
       marker.addTo(markerLayer);
     });
@@ -419,9 +551,39 @@
 
   var searchTimer;
   el.search.addEventListener('input', function () { clearTimeout(searchTimer); searchTimer = setTimeout(render, 150); });
-  [el.country, el.type, el.org].forEach(function (s) { s.addEventListener('change', function () { render(); fitToPins(); }); });
   el.form.addEventListener('submit', function (ev) { ev.preventDefault(); });
-  el.form.addEventListener('reset', function () { setTimeout(function () { render(); fitToPins(); }); });
+  el.resetAll.addEventListener('click', resetAll);
+
+  el.groups.addEventListener('click', function (ev) {
+    var g = ev.target.closest('.cms-search-filter-group');
+    if (!g) return;
+    var key = g.getAttribute('data-group');
+    if (ev.target.closest('.cms-search-filter-link')) {
+      if (g.querySelector('.filter-dropdown').hidden) openGroup(key); else closeGroups();
+    } else if (ev.target.closest('[data-apply]')) {
+      applyGroup(key);
+    } else if (ev.target.closest('[data-select-all],[data-clear]')) {
+      var on = !!ev.target.closest('[data-select-all]');
+      g.querySelectorAll('.cms-search-filter-group__item:not([hidden]) .cms-search-filter-group__checkbox').forEach(function (cb) { cb.checked = on; });
+    }
+  });
+  el.groups.addEventListener('input', function (ev) {
+    if (ev.target.matches('.cms-search-filter-group__search-input')) filterOptions(ev.target.closest('.cms-search-filter-group'), ev.target.value);
+  });
+  el.tags.addEventListener('click', function (ev) {
+    var t = ev.target.closest('[data-untag]');
+    if (!t) return;
+    var key = t.getAttribute('data-untag'), v = t.getAttribute('data-value');
+    setFilter(key, selected[key].filter(function (x) { return x !== v; }));
+  });
+  // Close an open dropdown on outside click or Escape, discarding unapplied ticks.
+  document.addEventListener('click', function (ev) { if (!ev.target.closest('.cms-search-filter-group')) closeGroups(); });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Escape') return;
+    var open = el.groups.querySelector('.cms-search-filter-link[aria-expanded="true"]');
+    closeGroups();
+    if (open) open.focus();
+  });
 
   el.tabMap.addEventListener('click', function () { setView('map'); });
   el.tabList.addEventListener('click', function () { setView('list'); });
@@ -437,8 +599,8 @@
     var t = ev.target.closest('[data-goto],[data-country],[data-reset]');
     if (!t) return;
     if (t.hasAttribute('data-goto')) goTo(t.getAttribute('data-goto'));
-    else if (t.hasAttribute('data-reset')) el.form.reset();
-    else { el.country.value = t.getAttribute('data-country'); setView('list'); }
+    else if (t.hasAttribute('data-reset')) resetAll();
+    else { selected.country = [t.getAttribute('data-country')]; setView('list'); }
   });
 
   if ('ResizeObserver' in window) new ResizeObserver(postHeight).observe(document.body);

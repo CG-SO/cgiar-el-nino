@@ -11,17 +11,21 @@ Static HTML, CSS and JavaScript with no build step. The content comes from a pub
 | `index.html` | The explorer (the page the iframe loads) |
 | `assets/js/app.js` | Loads the sheet, filters, map, list and cards |
 | `assets/js/places.js` | Pin positions for each country or region name |
-| `assets/css/app.css` | Styles using CGIAR.org design tokens (Noto Sans/Serif, brand greens) |
+| `assets/css/cgiar-ui.css` | CGIAR.org design system subset (tokens, `h-typo-*`, `a-button`, `a-link`, `a-tag`, `m-search-field`), copied from the production stylesheet; don't edit by hand |
+| `assets/css/app.css` | App layout, using only design-system semantic tokens |
+| `assets/icons.svg` | CGIAR icon sprite |
 | `assets/data/countries.geojson` | Country outlines (Natural Earth 1:110m, public domain) |
 | `embed.html` | Test page showing the iframe embed code |
 
 ## Run locally
 
-With MAMP running, open <http://localhost:8888/cgiar-el-nino/>. Any static server works too:
+No PHP or database is needed; any static file server works. From the project folder:
 
 ```bash
 python3 -m http.server 8765
 ```
+
+Then open <http://localhost:8765/> (or <http://localhost:8765/embed.html> to see it inside an iframe). Opening `index.html` straight from disk (`file://`) won't work, because the browser blocks loading the map outlines from a local file.
 
 ## Editing content
 
@@ -60,4 +64,4 @@ Paste this into a Full HTML block, with `src` pointing to wherever the app is ho
 
 The script resizes the iframe to fit its content, so there is no second scrollbar. Without it the iframe stays at 1400px and scrolls inside.
 
-To open a pre-filtered view, add query parameters to the `src`: `?country=Malawi`, `?type=Tools, data and forecasts`, `?org=IWMI`, `?q=drought`, `?view=list`.
+To open a pre-filtered view, add query parameters to the `src`: `?country=Malawi`, `?type=Tools, data and forecasts`, `?org=IWMI`, `?q=drought`, `?view=list`. Filters are multi-select, so a parameter can repeat: `?country=India&country=Malawi`. Point the `src` at the folder (`…/cgiar-el-nino/?country=Malawi`) rather than `index.html`, because some servers redirect `index.html` and drop the query.

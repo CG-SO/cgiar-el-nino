@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="cgiar">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,50 +7,58 @@
   <meta name="description" content="Search and map CGIAR reports, tools, advisories and events on the 2026 El Niño.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,300..700;1,400&family=Noto+Serif:wght@400;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Noto+Serif:ital,wght@0,100..900;1,100..900&display=fallback">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="assets/css/cgiar-ui.css">
   <link rel="stylesheet" href="assets/css/app.css">
 </head>
-<body>
+<body data-area="light">
   <main class="explorer" aria-labelledby="explorer-title">
     <h1 id="explorer-title" class="visually-hidden">El Niño 2026 evidence explorer</h1>
 
     <form class="controls" id="controls" role="search" aria-label="Filter published work">
-      <div class="search">
-        <label for="search" class="visually-hidden">Search published work</label>
-        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input id="search" name="q" type="search" placeholder="Search titles, organizations, places" autocomplete="off">
+      <div class="controls__search">
+        <div class="m-search-field">
+          <label for="search" class="visually-hidden">Search published work</label>
+          <input id="search" class="m-search-field__input" name="q" type="search" placeholder="Enter search term" autocomplete="off">
+          <span class="m-search-field__btn m-search-field__btn--search" aria-hidden="true">
+            <svg class="a-icon"><use href="assets/icons.svg#search"></use></svg>
+          </span>
+        </div>
       </div>
-      <div class="filters">
-        <div class="field">
-          <label for="f-country">Country or region</label>
-          <select id="f-country" name="country"><option value="">All</option></select>
+      <div class="cms-search-filter__container">
+        <div class="cms-search-filter__wrapper" id="filter-groups"></div>
+        <div class="cms-search-filter__tags" id="filter-tags" aria-label="Active filters"></div>
+        <div class="cms-search-filter__actions">
+          <button class="cms-search-filter__reset h-typo-link" id="reset-all" type="button">
+            <span>Reset</span>
+            <svg class="a-icon" aria-hidden="true"><use href="assets/icons.svg#reset"></use></svg>
+          </button>
         </div>
-        <div class="field">
-          <label for="f-type">Type of work</label>
-          <select id="f-type" name="type"><option value="">All</option></select>
-        </div>
-        <div class="field">
-          <label for="f-org">Organization</label>
-          <select id="f-org" name="org"><option value="">All</option></select>
-        </div>
-        <button class="reset" type="reset">Reset filters</button>
       </div>
     </form>
 
     <div class="bar">
-      <p class="count" id="count" aria-live="polite">Loading published work…</p>
+      <p class="count h-typo-copy-m" id="count" aria-live="polite">Loading published work…</p>
       <div class="tabs" role="tablist" aria-label="View">
-        <button class="tab" id="tab-map" role="tab" type="button" aria-selected="true" aria-controls="pane-map">Map</button>
-        <button class="tab" id="tab-list" role="tab" type="button" aria-selected="false" aria-controls="pane-list" tabindex="-1">List</button>
+        <button class="a-button a-button--size-small tab h-typo-link-s" id="tab-map" role="tab" type="button" aria-selected="true" aria-controls="pane-map">
+          <span class="a-button__icon"><svg class="a-icon" aria-hidden="true"><use href="assets/icons.svg#globe"></use></svg></span>
+          <span class="a-button__text">Map</span>
+        </button>
+        <button class="a-button a-button--size-small tab h-typo-link-s" id="tab-list" role="tab" type="button" aria-selected="false" aria-controls="pane-list" tabindex="-1">
+          <span class="a-button__icon"><svg class="a-icon" aria-hidden="true"><use href="assets/icons.svg#menu"></use></svg></span>
+          <span class="a-button__text">List</span>
+        </button>
       </div>
     </div>
 
     <section id="pane-map" class="pane" role="tabpanel" aria-labelledby="tab-map">
-      <div id="map" class="map" aria-label="Map of countries and regions with published El Niño work"></div>
+      <div class="map-frame">
+        <div id="map" class="map" aria-label="Map of countries and regions with published El Niño work"></div>
+      </div>
       <div class="map-foot">
-        <p id="global-note" class="global-note" hidden></p>
-        <p class="map-note">Pins mark places covered by published work. They do not show El Niño impacts or CGIAR office locations.</p>
+        <p id="global-note" class="global-note h-typo-copy-s" hidden></p>
+        <p class="map-note h-typo-caption">Pins mark places covered by published work. They do not show El Niño impacts or CGIAR office locations.</p>
       </div>
     </section>
 
@@ -59,8 +67,8 @@
     </section>
 
     <section class="results" aria-labelledby="results-title">
-      <h2 id="results-title" class="results-title">Reports, tools and analysis</h2>
-      <div id="resources" class="resources"></div>
+      <h2 id="results-title" class="results__title h-typo-headline-m-2">Reports, tools and analysis</h2>
+      <div id="resources"></div>
     </section>
   </main>
 
