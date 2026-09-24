@@ -4,6 +4,12 @@ Searchable map and list of CGIAR reports, tools, advisories and events on the 20
 
 Static HTML, CSS and JavaScript with no build step. The content comes from a public Google Sheet each time the page loads.
 
+**Live:** <https://cg-so.github.io/cgiar-el-nino/> · embed test: <https://cg-so.github.io/cgiar-el-nino/embed.html>
+
+## Hosting
+
+GitHub Pages serves the `main` branch (root folder). Every push to `main` goes live within a minute or two. Content changes in the Google Sheet need no deploy.
+
 ## Files
 
 | Path | Purpose |
@@ -48,10 +54,10 @@ If a new place name has no pin, the browser console warns about it. Add it to `a
 
 ## Embedding on CGIAR.org
 
-Paste this into a Full HTML block, with `src` pointing to wherever the app is hosted:
+Paste this into a Full HTML block:
 
 ```html
-<iframe id="cgiar-elnino" src="https://YOUR-HOST/cgiar-el-nino/" title="El Niño 2026 evidence explorer"
+<iframe id="cgiar-elnino" src="https://cg-so.github.io/cgiar-el-nino/" title="El Niño 2026 evidence explorer"
   loading="lazy" style="display:block;width:100%;height:1400px;border:0;"></iframe>
 <script>
   window.addEventListener('message', function (e) {
@@ -62,6 +68,6 @@ Paste this into a Full HTML block, with `src` pointing to wherever the app is ho
 </script>
 ```
 
-The script resizes the iframe to fit its content, so there is no second scrollbar. Without it the iframe stays at 1400px and scrolls inside.
+The script resizes the iframe to fit its content, so there is no second scrollbar. Without it (for example, if the Drupal text format strips `<script>` tags) the iframe stays at 1400px and scrolls inside.
 
-To open a pre-filtered view, add query parameters to the `src`: `?country=Malawi`, `?type=Tools, data and forecasts`, `?org=IWMI`, `?q=drought`, `?view=list`. Filters are multi-select, so a parameter can repeat: `?country=India&country=Malawi`. Point the `src` at the folder (`…/cgiar-el-nino/?country=Malawi`) rather than `index.html`, because some servers redirect `index.html` and drop the query.
+To open a pre-filtered view, add query parameters to the `src`: `?country=Malawi`, `?type=Tools, data and forecasts`, `?org=IWMI`, `?q=drought`, `?view=list`. Filters are multi-select, so a parameter can repeat: `?country=India&country=Malawi`. Point the `src` at the folder (`https://cg-so.github.io/cgiar-el-nino/?country=Malawi`) rather than `index.html`, because some servers redirect `index.html` and drop the query.
