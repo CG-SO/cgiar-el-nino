@@ -2,9 +2,14 @@
   'use strict';
 
   // Public Google Sheet that holds the content. Editors change the sheet;
-  // the page picks the change up on the next load.
+  // the page picks the change up on the next load. Point this at the public
+  // copy that holds only published rows (see README, "Managing content").
   var SHEET_ID = '1jRSLLTN6pCHIy3XGOg4yHNHA1EZKNfDdbz2Jg9yBXOA';
   var SHEET_GID = '978084512';
+
+  // If the sheet has a "Publish" column, only rows marked with one of these
+  // values are shown. Without the column, every complete row is shown.
+  var PUBLISH_YES = /^(yes|y|true|x|approved|publish|published)$/i;
   var SHEET_CSV = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv&gid=' + SHEET_GID;
 
   // Content groups from the web content structure, in display order.
@@ -118,11 +123,12 @@
   function toEntry(r, i) {
     var title = r['title'], url = safeUrl(r['primary url']);
     if (!title || !url) return null;
+    if ('publish' in r && !PUBLISH_YES.test(r['publish'])) return null;
     var place = locate(r['country or region'], r['latitude'], r['longitude']);
     var date = parseDate(r['date']);
     var org = r['centre or organization'] || '';
     return {
-      id: 'r' + (r['activity id'] || i).replace(/[^\w-]/g, '-'),
+      id: 'r' + String(r['activity id'] || i).replace(/[^\w-]/g, '-'),
       title: title,
       org: org,
       orgs: ORGS.filter(function (o) { return o.re.test(org); }).map(function (o) { return o.label; }),
