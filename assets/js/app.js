@@ -364,26 +364,47 @@
       el.globalNote.hidden = true;
     }
 
-    el.resources.innerHTML = shown.length ? shown.map(card).join('') : emptyState();
+    el.resources.innerHTML = shown.length
+      ? '<ul class="cms-search-result__items cms-search-result__items--grid-1">' + shown.map(card).join('') + '</ul>'
+      : emptyState();
     el.index.innerHTML = shown.length ? indexList(shown) : emptyState();
     drawMarkers(pinned);
     writeState();
     postHeight();
   }
 
+  // Result card in the cgiar.org/governance style (m-result). The whole card
+  // opens the primary link; an optional second link sits in the tag row.
   function card(e) {
-    return '<article class="resource" id="' + e.id + '" tabindex="-1">' +
-      '<ul class="resource__tags" aria-label="Tags"><li class="a-tag"><span class="h-typo-tag">' + esc(e.placeLabel) + '</span></li>' +
-      (e.type ? '<li class="a-tag a-tag--type"><span class="h-typo-tag">' + esc(e.type) + '</span></li>' : '') + '</ul>' +
-      '<h3 class="resource__title h-typo-headline-xs">' + esc(e.title) + '</h3>' +
-      '<p class="resource__meta h-typo-copy-s">' + esc(e.org) + (e.date ? ' <span aria-hidden="true">·</span> <time>' + esc(e.date) + '</time>' : '') + '</p>' +
-      (e.text ? '<p class="resource__text h-typo-copy-m">' + esc(e.text) + '</p>' : '') +
-      '<div class="resource__actions">' + e.links.map(function (l) {
-        return '<a class="a-link a-link--right h-typo-link-s" href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer">' +
-          '<span class="a-link__text">' + esc(l.label) + '<span class="visually-hidden"> (opens in a new tab)</span></span>' +
-          '<span class="a-link__icon">' + icon('external-link') + '</span></a>';
-      }).join('') + '</div>' +
-    '</article>';
+    var primary = e.links[0], second = e.links[1];
+    var newTab = '<span class="visually-hidden"> (opens in a new tab)</span>';
+    return '<li class="m-result" id="' + e.id + '" tabindex="-1">' +
+      '<div class="m-result__link"><article class="m-result__article">' +
+        (e.type ? '<div class="m-result__meta"><span class="h-typo-copy-xs-2">' + esc(e.type) + '</span></div><div class="h-s2"></div>' : '') +
+        '<div class="m-result__headline"><h3 class="h-typo-headline-xs">' +
+          '<a class="m-result__primary" href="' + esc(primary.url) + '" target="_blank" rel="noopener noreferrer">' + esc(e.title) + newTab + '</a>' +
+        '</h3></div>' +
+        '<div class="h-s2"></div>' +
+        '<div class="m-result__captions">' +
+          (e.date ? caption('calendar', '<time>' + esc(e.date) + '</time>') : '') +
+          (e.org ? caption('account', esc(e.org)) : '') +
+        '</div>' +
+        (e.text ? '<div class="h-s3"></div><div class="m-result__text"><p class="h-typo-copy-m">' + esc(e.text) + '</p></div>' : '') +
+        '<div class="h-s6"></div>' +
+        '<div class="m-result__controls">' +
+          '<div class="m-result__tags">' +
+            '<div class="a-tag"><span class="h-typo-tag">' + esc(e.placeLabel) + '</span></div>' +
+            (second ? '<a class="a-link a-link--right a-link--small h-typo-link-s m-result__second" href="' + esc(second.url) + '" target="_blank" rel="noopener noreferrer">' +
+              '<span class="a-link__text">' + esc(second.label) + newTab + '</span><span class="a-link__icon">' + icon('external-link') + '</span></a>' : '') +
+          '</div>' +
+          '<div class="m-result__icon">' + icon('external-link') + '</div>' +
+        '</div>' +
+      '</article></div>' +
+    '</li>';
+  }
+
+  function caption(name, html) {
+    return '<div class="m-result__caption"><span class="m-result__caption-icon">' + icon(name) + '</span><span class="h-typo-copy-xs">' + html + '</span></div>';
   }
 
   function indexList(shown) {

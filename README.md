@@ -68,6 +68,6 @@ Paste this into a Full HTML block:
 </script>
 ```
 
-The script resizes the iframe to fit its content, so there is no second scrollbar. Without it (for example, if the Drupal text format strips `<script>` tags) the iframe stays at 1400px and scrolls inside.
+The page has no outer padding and a transparent background, so it sits flush inside a CGIAR.org grid cell; the cell provides the spacing and background. The script resizes the iframe to fit its content, so there is no second scrollbar. Without it (for example, if the Drupal text format strips `<script>` tags) the iframe stays at 1400px and scrolls inside.
 
 To open a pre-filtered view, add query parameters to the `src`: `?country=Malawi`, `?type=Tools, data and forecasts`, `?org=IWMI`, `?q=drought`, `?view=list`. Filters are multi-select, so a parameter can repeat: `?country=India&country=Malawi`. Point the `src` at the folder (`https://cg-so.github.io/cgiar-el-nino/?country=Malawi`) rather than `index.html`, because some servers redirect `index.html` and drop the query.

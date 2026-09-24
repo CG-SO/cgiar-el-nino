@@ -6,9 +6,12 @@
 
 html { font-size: 62.5%; -webkit-text-size-adjust: 100%; }
 * { box-sizing: border-box; }
+/* Transparent and edge-to-edge: the page is embedded in a CGIAR.org grid
+   cell, which supplies the background and the outer spacing. */
+html { color-scheme: light; }
+html, body { background: transparent; }
 body {
   margin: 0;
-  background: var(--brand-body-bg);
   color: var(--brand-body-fg);
   font-family: var(--typography-font-families-font-1), Arial, sans-serif;
   font-size: 1.6rem;
@@ -23,11 +26,7 @@ button, input, select { font: inherit; color: inherit; }
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 
-.explorer {
-  max-width: 128rem;
-  margin: 0 auto;
-  padding: var(--s6) var(--layout-page-context);
-}
+.explorer { margin: 0; padding: 0; }
 
 /* ---------- Controls (cms-search-filter, as on cgiar.org/publications) ---------- */
 
@@ -176,34 +175,34 @@ button, input, select { font: inherit; color: inherit; }
 .group__row-title { color: var(--color-foreground-emphasis); }
 .group__row-meta { color: var(--color-foreground-subtle); }
 
-/* ---------- Resource cards ---------- */
+/* ---------- Result cards (m-result, as on cgiar.org/governance) ---------- */
 
 .results { margin-top: var(--s8); }
-.results__title {
-  margin: 0;
-  padding-bottom: var(--s4);
-  border-bottom: 1px solid var(--color-border-default);
-  color: var(--color-foreground-emphasis);
-}
+.results__title { margin: 0 0 var(--s6); color: var(--color-foreground-emphasis); }
+.cms-search-result__items { margin: 0; padding: 0; list-style: none; }
 
-.resource {
-  padding: var(--s6) var(--s4);
-  margin: 0 calc(var(--s4) * -1);
-  border-bottom: 1px solid var(--color-border-default);
-  border-radius: var(--dimension-border-radius-card);
-  scroll-margin: var(--s6);
-}
-.resource:focus { outline: none; }
-.resource.is-target { animation: flash 2.4s ease-out; }
-@keyframes flash { 0%, 40% { background: var(--color-dim-10); } 100% { background: transparent; } }
+.m-result { scroll-margin: var(--s6); }
+.m-result:focus { outline: none; }
+.m-result__meta { color: var(--tile-card-fg-overline); }
+.m-result:hover .m-result__meta { color: inherit; }
+.m-result__headline h3 { margin: 0; }
+.m-result__text p { margin: 0; max-width: 90rem; }
+.m-result__captions { flex-wrap: wrap; gap: var(--s1) var(--s4); }
 
-.resource__tags { display: flex; flex-wrap: wrap; gap: var(--s2); margin: 0 0 var(--s3); padding: 0; list-style: none; }
-.resource__tags .a-tag > * { text-transform: uppercase; }
-.resource__tags .a-tag--type > * { background: var(--color-background-solid-neutral-subtle); color: var(--color-foreground-default); }
-.resource__title { max-width: 82rem; margin: 0 0 var(--s2); color: var(--color-foreground-emphasis); }
-.resource__meta { margin: 0 0 var(--s3); color: var(--color-foreground-subtle); }
-.resource__text { max-width: 82rem; margin: 0 0 var(--s2); }
-.resource__actions { display: flex; flex-wrap: wrap; gap: 0 var(--s5); padding-left: var(--s2); }
+/* The title link stretches over the whole card, so the card opens the
+   primary link while the second link stays separately clickable. */
+.m-result__primary { color: inherit; text-decoration: none; outline: none; }
+.m-result__primary::after { content: ""; position: absolute; inset: 0; border-radius: var(--tile-card-border-radius); }
+.m-result:has(.m-result__primary:focus-visible) .m-result__link { border-color: var(--body-outline-color-fg); outline: 1px solid var(--body-outline-color-fg); }
+.m-result__tags { flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s4); }
+.m-result__second { position: relative; z-index: 1; margin-inline: 0; }
+.m-result:hover .m-result__second { color: inherit; }
+.m-result:hover .m-result__second:hover { color: var(--tile-card-hover-fg-link-hover); }
+.m-result__icon { color: var(--tile-card-fg-icon); }
+.m-result:hover .m-result__icon { color: inherit; }
+
+.m-result.is-target .m-result__link { animation: flash 2.4s ease-out; }
+@keyframes flash { 0%, 40% { border-color: var(--color-foreground-solid-accent-default); box-shadow: inset 0 0 0 .1rem var(--color-foreground-solid-accent-default); } 100% { border-color: var(--tile-card-stroke); box-shadow: none; } }
 
 /* ---------- Notices ---------- */
 
