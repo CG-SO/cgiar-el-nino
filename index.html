@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>El Niño 2026 evidence explorer | CGIAR</title>
+  <meta name="description" content="Search and map CGIAR reports, tools, advisories and events on the 2026 El Niño.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,300..700;1,400&family=Noto+Serif:wght@400;600&display=swap">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+  <main class="explorer" aria-labelledby="explorer-title">
+    <h1 id="explorer-title" class="visually-hidden">El Niño 2026 evidence explorer</h1>
+
+    <form class="controls" id="controls" role="search" aria-label="Filter published work">
+      <div class="search">
+        <label for="search" class="visually-hidden">Search published work</label>
+        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search" name="q" type="search" placeholder="Search titles, organizations, places" autocomplete="off">
+      </div>
+      <div class="filters">
+        <div class="field">
+          <label for="f-country">Country or region</label>
+          <select id="f-country" name="country"><option value="">All</option></select>
+        </div>
+        <div class="field">
+          <label for="f-type">Type of work</label>
+          <select id="f-type" name="type"><option value="">All</option></select>
+        </div>
+        <div class="field">
+          <label for="f-org">Organization</label>
+          <select id="f-org" name="org"><option value="">All</option></select>
+        </div>
+        <button class="reset" type="reset">Reset filters</button>
+      </div>
+    </form>
+
+    <div class="bar">
+      <p class="count" id="count" aria-live="polite">Loading published work…</p>
+      <div class="tabs" role="tablist" aria-label="View">
+        <button class="tab" id="tab-map" role="tab" type="button" aria-selected="true" aria-controls="pane-map">Map</button>
+        <button class="tab" id="tab-list" role="tab" type="button" aria-selected="false" aria-controls="pane-list" tabindex="-1">List</button>
+      </div>
+    </div>
+
+    <section id="pane-map" class="pane" role="tabpanel" aria-labelledby="tab-map">
+      <div id="map" class="map" aria-label="Map of countries and regions with published El Niño work"></div>
+      <div class="map-foot">
+        <p id="global-note" class="global-note" hidden></p>
+        <p class="map-note">Pins mark places covered by published work. They do not show El Niño impacts or CGIAR office locations.</p>
+      </div>
+    </section>
+
+    <section id="pane-list" class="pane" role="tabpanel" aria-labelledby="tab-list" hidden>
+      <div id="index"></div>
+    </section>
+
+    <section class="results" aria-labelledby="results-title">
+      <h2 id="results-title" class="results-title">Reports, tools and analysis</h2>
+      <div id="resources" class="resources"></div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="assets/js/places.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
