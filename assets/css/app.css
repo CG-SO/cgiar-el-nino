@@ -31,18 +31,19 @@ button, input, select { font: inherit; color: inherit; }
 /* ---------- Controls (cms-search-filter, as on cgiar.org/publications) ---------- */
 
 .controls { display: grid; gap: var(--s7); }
-.controls__search { width: 100%; max-width: 72rem; margin: 0 auto; }
+.controls__search { width: 100%; margin: 0 auto; }
+@media (min-width: 768px) { .controls__search { width: 50%; } }
 .m-search-field__input { width: 100%; }
 
 .cms-search-filter-group { position: relative; }
 .cms-search-filter-link {
   width: 100%;
-  min-height: 5.6rem;
   background: none;
   border: 0;
   cursor: pointer;
   text-align: left;
 }
+.cms-search-filter-link:disabled { cursor: progress; opacity: var(--button-disabled-opacity); }
 .filter-dropdown { position: absolute; top: 100%; left: 0; z-index: 1000; }
 .cms-search-filter-group__list { margin: 0; padding: 0; list-style: none; }
 .cms-search-filter-group__item[hidden] { display: none; }
@@ -78,6 +79,7 @@ button, input, select { font: inherit; color: inherit; }
 /* ---------- Map (light, matching the CGIAR APAC map) ---------- */
 
 .map-frame {
+  position: relative;
   --color-map-water: var(--color-non-brand-placeholder);
   --color-map-land: var(--color-solid-grey-0);
   --color-map-coast: var(--color-solid-grey-40);
@@ -203,6 +205,44 @@ button, input, select { font: inherit; color: inherit; }
 
 .m-result.is-target .m-result__link { animation: flash 2.4s ease-out; }
 @keyframes flash { 0%, 40% { border-color: var(--color-foreground-solid-accent-default); box-shadow: inset 0 0 0 .1rem var(--color-foreground-solid-accent-default); } 100% { border-color: var(--tile-card-stroke); box-shadow: none; } }
+
+/* ---------- Loading state ---------- */
+
+/* Spinner shaped like cgiar.org's cms-loader, colored with tokens. */
+.cms-loader {
+  display: block;
+  width: 2.8rem; height: 2.8rem;
+  border: .3rem solid var(--color-background-dim-neutral-default);
+  border-top-color: var(--color-foreground-solid-accent-default);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(1turn); } }
+
+.map-loading {
+  position: absolute; inset: 0; z-index: 1000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s3);
+  background: var(--color-dim-white-60);
+  color: var(--color-foreground-emphasis);
+}
+.map-loading[hidden] { display: none; }
+.map-loading p { margin: 0; }
+
+.m-result--skeleton .m-result__link { pointer-events: none; }
+.skeleton {
+  display: block;
+  height: 1.2rem;
+  background: var(--color-background-dim-neutral-default);
+  border-radius: .4rem;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+.skeleton--meta { width: 14rem; }
+.skeleton--title { width: 60%; height: 2.2rem; }
+.skeleton--caption { width: 24rem; }
+.skeleton--text { width: 90%; }
+.skeleton--text-short { width: 70%; margin-top: var(--s2); }
+.skeleton--tag { width: 8rem; height: 2.4rem; }
+@keyframes skeleton-pulse { 50% { opacity: .45; } }
 
 /* ---------- Notices ---------- */
 

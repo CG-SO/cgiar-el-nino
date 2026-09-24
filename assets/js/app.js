@@ -48,10 +48,12 @@
   var el = {
     form: $('controls'), search: $('search'), groups: $('filter-groups'), tags: $('filter-tags'), resetAll: $('reset-all'),
     count: $('count'), tabMap: $('tab-map'), tabList: $('tab-list'), paneMap: $('pane-map'), paneList: $('pane-list'),
-    index: $('index'), resources: $('resources'), globalNote: $('global-note'), map: $('map')
+    index: $('index'), resources: $('resources'), globalNote: $('global-note'), map: $('map'),
+    main: $('explorer'), mapLoading: $('map-loading')
   };
 
   var entries = [];
+  var loading = false;
   var view = 'map';
   var map, markerLayer, countryLayer;
 
@@ -147,14 +149,38 @@
     };
   }
 
+  // Placeholder cards shown while the sheet downloads.
+  function skeletonCards(n) {
+    var one = '<li class="m-result m-result--skeleton" aria-hidden="true"><div class="m-result__link"><article class="m-result__article">' +
+      '<span class="skeleton skeleton--meta"></span><div class="h-s3"></div><span class="skeleton skeleton--title"></span>' +
+      '<div class="h-s3"></div><span class="skeleton skeleton--caption"></span><div class="h-s4"></div>' +
+      '<span class="skeleton skeleton--text"></span><span class="skeleton skeleton--text-short"></span>' +
+      '<div class="h-s6"></div><span class="skeleton skeleton--tag"></span></article></div></li>';
+    return '<ul class="cms-search-result__items cms-search-result__items--grid-1">' + new Array(n + 1).join(one) + '</ul>';
+  }
+
+  function setLoading(on) {
+    loading = on;
+    el.main.setAttribute('aria-busy', String(on));
+    el.mapLoading.hidden = !on;
+    if (on) {
+      el.count.textContent = 'Loading published work…';
+      el.globalNote.hidden = true;
+      el.resources.innerHTML = skeletonCards(3);
+      el.index.innerHTML = '<span class="cms-loader" aria-hidden="true"></span>';
+      el.groups.innerHTML = GROUPS.map(groupHtml).join('');
+    }
+    postHeight();
+  }
+
   function load() {
-    el.count.textContent = 'Loading published work…';
-    el.resources.innerHTML = '';
+    setLoading(true);
     return fetch(SHEET_CSV, { cache: 'no-cache' })
       .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.text(); })
       .then(function (text) {
         entries = toRecords(parseCSV(text)).map(toEntry).filter(Boolean)
           .sort(function (a, b) { return b.time - a.time; });
+        setLoading(false);
         buildOptions();
         readState();
         render();
@@ -162,6 +188,7 @@
       })
       .catch(function (err) {
         console.error('[El Niño explorer]', err);
+        setLoading(false);
         el.count.textContent = 'Published work could not be loaded.';
         el.resources.innerHTML = '<div class="notice h-typo-copy-m"><p>We couldn’t reach the data source. Check your connection and try again.</p>' + button('Try again', 'id="retry"') + '</div>';
         $('retry').addEventListener('click', load);
@@ -202,7 +229,7 @@
   function groupHtml(g) {
     var id = 'filter-' + g.key;
     return '<div class="cms-search-filter-group" data-group="' + g.key + '">' +
-      '<button type="button" class="cms-search-filter-link h-typo-link" aria-expanded="false" aria-controls="' + id + '">' +
+      '<button type="button" class="cms-search-filter-link h-typo-link" aria-expanded="false" aria-controls="' + id + '"' + (loading ? ' disabled' : '') + '>' +
         '<span class="cms-search-filter-link__wrapper"><span class="cms-search-filter-link__text">' + esc(g.label) + '</span>' +
         '<span class="cms-search-filter-link__counter"></span></span>' +
         '<span class="cms-search-filter-link__icon">' + icon('arrow-down') + '</span>' +

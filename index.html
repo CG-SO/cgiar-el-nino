@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body data-area="light">
-  <main class="explorer" aria-labelledby="explorer-title">
+  <main class="explorer" id="explorer" aria-labelledby="explorer-title" aria-busy="true">
     <h1 id="explorer-title" class="visually-hidden">El Niño 2026 evidence explorer</h1>
 
     <form class="controls" id="controls" role="search" aria-label="Filter published work">
@@ -28,7 +28,7 @@
       </div>
       <div class="cms-search-filter__container">
         <div class="cms-search-filter__wrapper" id="filter-groups"></div>
-        <div class="cms-search-filter__tags" id="filter-tags" aria-label="Active filters"></div>
+        <div class="cms-search-filter__tags" id="filter-tags" aria-label="Active filters" hidden></div>
         <div class="cms-search-filter__actions">
           <button class="cms-search-filter__reset h-typo-link" id="reset-all" type="button">
             <span>Reset</span>
@@ -55,6 +55,10 @@
     <section id="pane-map" class="pane" role="tabpanel" aria-labelledby="tab-map">
       <div class="map-frame">
         <div id="map" class="map" aria-label="Map of countries and regions with published El Niño work"></div>
+        <div class="map-loading" id="map-loading" role="status">
+          <span class="cms-loader" aria-hidden="true"></span>
+          <p class="h-typo-copy-s-2">Loading published work…</p>
+        </div>
       </div>
       <div class="map-foot">
         <p id="global-note" class="global-note h-typo-copy-s" hidden></p>
